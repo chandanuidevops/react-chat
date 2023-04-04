@@ -1,8 +1,75 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import styled from "styled-components";
-import { useNavigate, Link } from "react-router-dom";
 import Logo from "../assets/logo.svg";
+import { loginRoute } from "../utils/APIRoutes";
+import { useNavigate, Link } from "react-router-dom";
+const Login = () => {
+  const navigate = useNavigate();
+  const [values, setValues] = useState({ email: "", password: "" });
+
+  const handleChange = (event) => {
+    setValues({ ...values, [event.target.name]: event.target.value });
+  };
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (validateForm()) {
+      const { email, password } = values;
+      const { data } = await axios.post(loginRoute, {
+        email,
+        password,
+      });
+      if (data.status === "fail") {
+        console.log(data.message);
+      }
+      if (data.status === "success") {
+        localStorage.setItem(
+          process.env.REACT_APP_LOCALHOST_KEY,
+          JSON.stringify(data.data.user)
+        );
+        navigate("/");
+      }
+    }
+  };
+
+  const validateForm = () => {
+    const { email, password } = values;
+    if (email === "") {
+      return false;
+    } else if (password === "") {
+      return false;
+    }
+    return true;
+  };
+  return (
+    <FormContainer>
+      <form action="" onSubmit={(event) => handleSubmit(event)}>
+        <div className="brand">
+          <img src={Logo} alt="logo" />
+          <h1>snappy</h1>
+        </div>
+        <input
+          type="email"
+          placeholder="Email"
+          name="email"
+          onChange={(e) => handleChange(e)}
+          min="3"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          name="password"
+          onChange={(e) => handleChange(e)}
+        />
+        <button type="submit">Log In</button>
+        <span>
+          Don't have an account ? <Link to="/register">Create One.</Link>
+        </span>
+      </form>
+    </FormContainer>
+  );
+};
+export default Login;
 
 const FormContainer = styled.div`
   height: 100vh;
@@ -71,70 +138,3 @@ const FormContainer = styled.div`
     }
   }
 `;
-const Login=()=>{
-    const [values, setValues] = useState({ username: "", password: "" });
-
-
-    const handleChange = (event) => {
-        setValues({ ...values, [event.target.name]: event.target.value });
-      };
-      const handleSubmit = async (event) => {
-        event.preventDefault();
-        if (validateForm()) {
-          const { username, password } = values;
-        //   const { data } = await axios.post(loginRoute, {
-        //     username,
-        //     password,
-        //   });
-        //   if (data.status === false) {
-        //   }
-        //   if (data.status === true) {
-        //     localStorage.setItem(
-        //       process.env.REACT_APP_LOCALHOST_KEY,
-        //       JSON.stringify(data.user)
-        //     );
-    
-        //   }
-        }
-      };
-
-
-
-      const validateForm = () => {
-        const { username, password } = values;
-        if (username === "") {
-          return false;
-        } else if (password === "") {
-          return false;
-        }
-        return true;
-      };
-    return (
-        <FormContainer>
-        <form action="" onSubmit={(event) => handleSubmit(event)}>
-          <div className="brand">
-            <img src={Logo} alt="logo" />
-            <h1>snappy</h1>
-          </div>
-          <input
-            type="text"
-            placeholder="Username"
-            name="username"
-            onChange={(e) => handleChange(e)}
-            min="3"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            name="password"
-            onChange={(e) => handleChange(e)}
-          />
-          <button type="submit">Log In</button>
-          <span>
-            Don't have an account ? <Link to="/register">Create One.</Link>
-          </span>
-        </form>
-      </FormContainer>
-    )
-}
-export default Login

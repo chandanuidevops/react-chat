@@ -3,6 +3,7 @@ import styled from "styled-components";
 import axios from "axios";
 import Logo from "../assets/logo.svg";
 import { useNavigate, Link } from "react-router-dom";
+import { registerRoute } from "../utils/APIRoutes";
 const FormContainer = styled.div`
   height: 100vh;
   width: 100vw;
@@ -70,54 +71,66 @@ const FormContainer = styled.div`
     }
   }
 `;
-const Register=()=>{
-    const [values, setValues] = useState({
-        username: "",
-        email: "",
-        password: "",
-        confirmPassword: "",
-      });
-      const handleChange = (event) => {
-        setValues({ ...values, [event.target.name]: event.target.value });
-      };
-      const handleSubmit = async (event) => {
-        event.preventDefault();
-        if (handleValidation()) {
-          const { email, username, password } = values;
-        //   const { data } = await axios.post(registerRoute, {
-        //     username,
-        //     email,
-        //     password,
-        //   });
-    
+const Register = () => {
+  const navigate = useNavigate();
+  const [values, setValues] = useState({
+    username: "",
+    email: "",
+    password: "",
+    passwordConfirm: "",
+  });
+  const handleChange = (event) => {
+    setValues({ ...values, [event.target.name]: event.target.value });
+  };
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (handleValidation()) {
+      const { email, username, password ,passwordConfirm,name} = values;
+        const { data ,status} = await axios.post(registerRoute, {
+          name,
+          username,
+          email,
+          password,
+          passwordConfirm
+        });
+     
+        if (data.status === 'success') {
+          localStorage.setItem(
+            process.env.REACT_APP_LOCALHOST_KEY,
+            JSON.stringify(data.data.user)
+          );
+          navigate("/");
         }
-      };
-      const handleValidation = () => {
-        const { password, confirmPassword, username, email } = values;
-        if (password !== confirmPassword) {
-       
-          return false;
-        } else if (username.length < 3) {
-      
-          return false;
-        } else if (password.length < 8) {
-        
-          return false;
-        } else if (email === "") {
-        
-          return false;
-        }
-    
-        return true;
-      };
-    return (
-        <div>
-           <FormContainer>
+    }
+  };
+  const handleValidation = () => {
+    const { password, passwordConfirm, username, email } = values;
+    if (password !== passwordConfirm) {
+      return false;
+    } else if (username.length < 3) {
+      return false;
+    } else if (password.length < 8) {
+      return false;
+    } else if (email === "") {
+      return false;
+    }
+
+    return true;
+  };
+  return (
+    <div>
+      <FormContainer>
         <form action="" onSubmit={(event) => handleSubmit(event)}>
           <div className="brand">
             <img src={Logo} alt="logo" />
             <h1>snappy</h1>
           </div>
+          <input
+            type="text"
+            placeholder="Name"
+            name="name"
+            onChange={(e) => handleChange(e)}
+          />
           <input
             type="text"
             placeholder="Username"
@@ -139,7 +152,7 @@ const Register=()=>{
           <input
             type="password"
             placeholder="Confirm Password"
-            name="confirmPassword"
+            name="passwordConfirm"
             onChange={(e) => handleChange(e)}
           />
           <button type="submit">Create User</button>
@@ -148,7 +161,7 @@ const Register=()=>{
           </span>
         </form>
       </FormContainer>
-        </div>
-    )
-}
-export default Register
+    </div>
+  );
+};
+export default Register;
