@@ -1,7 +1,100 @@
 import React, { useState, useEffect, useRef } from "react";
 import styled from "styled-components";
-
+import { sendMessageRoute, recieveMessageRoute } from "../utils/APIRoutes";
 import axios from "axios";
+import ChatInput from "./ChatInput";
+import { v4 as uuidv4 } from "uuid";
+export default function ChatContainer({ currentChat, socket }) {
+  const [messages, setMessages] = useState([]);
+  const scrollRef = useRef();
+  const [arrivalMessage, setArrivalMessage] = useState(null);
+  const data = JSON.parse(
+    localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
+  );
+  const handleSendMsg = async (msg) => {
+    socket.current.emit("send-msg", {
+      to: currentChat._id,
+      from: data._id,
+      msg,
+    });
+    await axios.post(sendMessageRoute, {
+      from: data._id,
+      to: currentChat._id,
+      message: msg,
+    });
+
+    const msgs = [...messages];
+    msgs.push({ fromSelf: true, message: msg });
+    setMessages(msgs);
+  };
+
+  useEffect(() => {
+    socket.current.on("msg-receive", (msg) => {
+      setArrivalMessage({
+        fromSelf: false,
+        message: msg,
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const response = await axios.post(recieveMessageRoute, {
+        from: data._id,
+        to: currentChat._id,
+      });
+      if (response.data.status === "success") {
+        setMessages(response.data.data);
+      } else {
+        setMessages([]);
+      }
+    })();
+  }, [currentChat]);
+
+  useEffect(()=>{
+    console.log("arrivalMessage>", arrivalMessage);
+    arrivalMessage && setMessages((prev) => [...prev, arrivalMessage]);
+  },[arrivalMessage])
+
+ 
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+  return (
+    <Container>
+      <div className="chat-header">
+        <div className="user-details">
+          <div className="avatar">
+            <img
+                src={`data:image/svg+xml;base64,${currentChat.avatarImage}`}
+              alt=""
+            />
+          </div>
+          <div className="username">
+            <h3>{currentChat.username}</h3>
+          </div>
+        </div>
+      </div>
+      <div className="chat-messages">
+    {  console.log("messages>", messages)}
+        {messages.map((message,i) => (
+          <div ref={scrollRef}   >
+            <div key={i}
+               className={`message ${
+                message.fromSelf ? "sended" : "recieved"
+              }`}
+            >
+              {console.log(i,message.message)}
+              <div className="content "> <p>{message.message}</p> </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <ChatInput handleSendMsg={handleSendMsg} />
+    </Container>
+  );
+}
 const Container = styled.div`
   display: grid;
   grid-template-rows: 10% 80% 10%;
@@ -74,38 +167,3 @@ const Container = styled.div`
     }
   }
 `;
-export default function ChatContainer() {
-
-    return (
-        <Container>
-          <div className="chat-header">
-            <div className="user-details">
-              <div className="avatar">
-                <img
-                //   src={`data:image/svg+xml;base64,${currentChat.avatarImage}`}
-                  alt=""
-                />
-              </div>
-              <div className="username">
-                {/* <h3>{currentChat.username}</h3> */}
-              </div>
-            </div>
-         
-          </div>
-          <div className="chat-messages">
-         
-                <div >
-                  <div
-                   
-                  >
-                    <div className="content ">
-                      {/* <p>{message.message}</p> */}
-                    </div>
-                  </div>
-                </div>
-           
-          </div>
-          {/* <ChatInput handleSendMsg={handleSendMsg} /> */}
-        </Container>
-      );
-    }

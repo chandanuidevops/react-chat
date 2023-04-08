@@ -16,11 +16,15 @@ const Container = styled.div`
 `;
 export default function Welcome() {
   const [userName, setUserName] = useState("");
+  const user = localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)
   useEffect(() => {
-    setUserName(
-      JSON.parse(localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY)).name
-    );
-  }, []);
+    if(user){
+      setUserName(
+        JSON.parse(user).name
+      );
+    }
+   
+  }, [user]);
 
   return (
     <Container>
